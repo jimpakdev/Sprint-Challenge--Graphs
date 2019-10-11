@@ -41,8 +41,13 @@ class Queue():
 traversalPath = []
 rooms_graph={}
 
+exits_dict={}
+
+for direction in player.currentRoom.getExits():
+    exits_dict[direction] = '?'
+
 # initialize root room in traversal graph
-rooms_graph[player.currentRoom.id] = player.currentRoom.getExits()
+rooms_graph[player.currentRoom.id] = exits_dict
 
 # bfs returns next possible exit 
 def bfs_exit(root_room_id):
@@ -56,8 +61,9 @@ def bfs_exit(root_room_id):
         node = path[-1]
 
         # check for exit == '?'
-        for direction in rooms_graph[node]:
-            if direction == '?':
+        
+        for direction in rooms_graph[node].value:
+            if exits_dict[direction] == '?':    # take closer look
                 # shortest path to the next available exit
                 return path
 
@@ -72,18 +78,28 @@ def bfs_exit(root_room_id):
 
 # loop will run until every room is visited
 while len(rooms_graph) < 500:
-    current_room_exits = player.currentRoom.getExits()
+    current_room_exits = player.currentRoom.getExits()  
     unexplored_exits = []
+    print(' ')
+    print('__PRINTS__')
+    print('CURRENT ROOM ID:', player.currentRoom.id)
 
     # check every exit in the room
-    for direction in current_room_exits:
-        if direction == '?':
+    for direction in exits_dict:
+        print(' ')
+        print('DIRECTION:', direction)
+        # do i have to initialize all directions == '?'
+        if exits_dict[direction] == '?':
             unexplored_exits.append(direction)
-
+            print(' ')
+            print('UNEXPLORED EXITS:', unexplored_exits)
+            
     # automate movement
     if len(unexplored_exits) > 0: 
+        print(' ')
+        print('Number of UNEXPLORED EXITS:', len(unexplored_exits))
         # random direction from unexplored exits
-        randomDirection = random.choice(unexplored_exits)
+        randomDirection = random.choice(unexplored_exits)    # be wary of using random...
         # log path direction
         traversalPath.append(randomDirection)
         # move player
@@ -93,7 +109,12 @@ while len(rooms_graph) < 500:
 
         # logs new room explored into traversal graph
         if player.currentRoom.id not in rooms_graph:
-            rooms_graph[player.currentRoom.id] = player.currentRoom.getExits()
+            rooms_graph[player.currentRoom.id] = exits_dict
+            print('ROOMS GRAPH', rooms_graph)
+
+    # when we are in a room with no exits
+    else:
+        pass
 
     # pick random direction from unexplored_exits
     # log in traversalPath
