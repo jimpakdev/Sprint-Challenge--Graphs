@@ -20,9 +20,93 @@ world.printRooms()
 player = Player("Name", world.startingRoom)
 
 
-# FILL THIS IN
-traversalPath = ['n', 's']
+class Queue():
+    def __init__(self):
+        self.queue = []
+    def enqueue(self, value):
+        self.queue.append(value)
+    def dequeue(self):
+        if self.size() > 0:
+            return self.queue.pop(0)
+        else:
+            return None
+    def size(self):
+        return len(self.queue)
 
+# traverse every room in the map in shortest amount of steps
+# build a traversal graph 
+# set up automated movement
+
+# FILL THIS IN
+traversalPath = []
+rooms_graph={}
+
+# initialize root room in traversal graph
+rooms_graph[player.currentRoom.id] = player.currentRoom.getExits()
+
+# bfs returns next possible exit 
+def bfs_exit(root_room_id):
+    q = Queue()
+    visited=set()
+
+    q.enqueue([root_room_id])
+
+    while q.size() > 0:
+        path = q.dequeue()
+        node = path[-1]
+
+        # check for exit == '?'
+        for direction in rooms_graph[node]:
+            if direction == '?':
+                # shortest path to the next available exit
+                return path
+
+        if node not in visited:
+            visited.add(node)
+
+            # adjacent edges for that room
+            for adjacent in rooms_graph[node]:
+                path_copy = path.copy()
+                path_copy.append(adjacent)
+                q.enqueue(path_copy)
+
+# loop will run until every room is visited
+while len(rooms_graph) < 500:
+    current_room_exits = player.currentRoom.getExits()
+    unexplored_exits = []
+
+    # check every exit in the room
+    for direction in current_room_exits:
+        if direction == '?':
+            unexplored_exits.append(direction)
+
+    # automate movement
+    if len(unexplored_exits) > 0: 
+        # random direction from unexplored exits
+        randomDirection = random.choice(unexplored_exits)
+        # log path direction
+        traversalPath.append(randomDirection)
+        # move player
+        player.travel(randomDirection)
+        # remove from unexplored because we are now in the new room
+        unexplored_exits.remove(randomDirection)
+
+        # logs new room explored into traversal graph
+        if player.currentRoom.id not in rooms_graph:
+            rooms_graph[player.currentRoom.id] = player.currentRoom.getExits()
+
+    # pick random direction from unexplored_exits
+    # log in traversalPath
+    # move player in that direction
+    # repeat until dead-end (dfs)
+    # if dead-end 
+    # go back to nearest room that has an unexplored path (bfs)
+
+    # Brian's advice
+    # build a map of the rooms
+    # then traverse through the rooms 
+    # if you hit a deadend
+    # reverse traverse? use BFS
 
 # TRAVERSAL TEST
 visited_rooms = set()
