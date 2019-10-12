@@ -41,13 +41,11 @@ class Queue():
 traversalPath = []
 rooms_graph={}
 
-exits_dict={}
-
+initial_exits_dict={}
 for direction in player.currentRoom.getExits():
-    exits_dict[direction] = '?'
-
+    initial_exits_dict[direction] = '?'
 # initialize root room in traversal graph
-rooms_graph[player.currentRoom.id] = exits_dict
+rooms_graph[player.currentRoom.id] = initial_exits_dict
 
 # bfs returns next possible exit 
 def bfs_exit(root_room_id):
@@ -61,9 +59,8 @@ def bfs_exit(root_room_id):
         node = path[-1]
 
         # check for exit == '?'
-        
-        for direction in rooms_graph[node].value:
-            if exits_dict[direction] == '?':    # take closer look
+        for direction in rooms_graph[node]:
+            if rooms_graph[node][direction] == '?':   
                 # shortest path to the next available exit
                 return path
 
@@ -76,45 +73,62 @@ def bfs_exit(root_room_id):
                 path_copy.append(adjacent)
                 q.enqueue(path_copy)
 
+def reverse_dir(direction):
+    if direction == 'n':
+        return 's'
+    if direction == 's':
+        return 'n'
+    if direction == 'w':
+        return 'e'
+    if direction == 'e':
+        return 'w'
+
 # loop will run until every room is visited
-while len(rooms_graph) < 500:
-    current_room_exits = player.currentRoom.getExits()  
+while len(rooms_graph) < 500:  
+    current_room_exits = rooms_graph[player.currentRoom.id]
     unexplored_exits = []
     print(' ')
-    print('__PRINTS__')
     print('CURRENT ROOM ID:', player.currentRoom.id)
 
     # check every exit in the room
-    for direction in exits_dict:
-        print(' ')
-        print('DIRECTION:', direction)
-        # do i have to initialize all directions == '?'
-        if exits_dict[direction] == '?':
+    for direction in current_room_exits:
+        if current_room_exits[direction] == '?':
             unexplored_exits.append(direction)
-            print(' ')
-            print('UNEXPLORED EXITS:', unexplored_exits)
             
     # automate movement
     if len(unexplored_exits) > 0: 
         print(' ')
         print('Number of UNEXPLORED EXITS:', len(unexplored_exits))
-        # random direction from unexplored exits
-        randomDirection = random.choice(unexplored_exits)    # be wary of using random...
+        # first exit 
+        firstDirection = unexplored_exits[0]   # be wary of using random...
         # log path direction
-        traversalPath.append(randomDirection)
+        traversalPath.append(firstDirection)
+        # to mark discovered exits in traversal graph after movement
+        prev_room_id = player.currentRoom.id
         # move player
-        player.travel(randomDirection)
-        # remove from unexplored because we are now in the new room
-        unexplored_exits.remove(randomDirection)
+        player.travel(firstDirection)
 
-        # logs new room explored into traversal graph
+        exits_dict={}
+        print('CURRENT ROOM ID:', player.currentRoom.id)
+
         if player.currentRoom.id not in rooms_graph:
+            for direction in player.currentRoom.getExits():
+                print('CURRENT ROOM EXITS', player.currentRoom.getExits())
+                exits_dict[direction] = '?'
+            # log new room explored into traversal graph
             rooms_graph[player.currentRoom.id] = exits_dict
             print('ROOMS GRAPH', rooms_graph)
+        # set explored exit in previous room to new room id
+        rooms_graph[prev_room_id][firstDirection] = player.currentRoom.id
+        # set new room entry way to previous room id
+        rooms_graph[player.currentRoom.id][reverse_dir(firstDirection)] = prev_room_id
 
     # when we are in a room with no exits
     else:
-        pass
+        # use bfs to get the path to the room with next available exit
+        # traverse the player with directions from the path
+        break
+
 
     # pick random direction from unexplored_exits
     # log in traversalPath
