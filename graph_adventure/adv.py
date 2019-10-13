@@ -20,9 +20,136 @@ world.printRooms()
 player = Player("Name", world.startingRoom)
 
 
-# FILL THIS IN
-traversalPath = ['n', 's']
+class Queue():
+    def __init__(self):
+        self.queue = []
+    def enqueue(self, value):
+        self.queue.append(value)
+    def dequeue(self):
+        if self.size() > 0:
+            return self.queue.pop(0)
+        else:
+            return None
+    def size(self):
+        return len(self.queue)
 
+# traverse every room in the map in shortest amount of steps
+# build a traversal graph 
+# set up automated movement
+
+# FILL THIS IN
+traversalPath = []
+rooms_graph={}
+
+initial_exits_dict={}
+for direction in player.currentRoom.getExits():
+    initial_exits_dict[direction] = '?'
+# initialize root room in traversal graph
+rooms_graph[player.currentRoom.id] = initial_exits_dict
+
+# bfs returns next possible exit 
+def bfs_exit(root_room_id):
+    q = Queue()
+    visited=set()
+
+    q.enqueue([root_room_id])
+
+    while q.size() > 0:
+        path = q.dequeue()
+        node = path[-1]
+
+        # check for exit == '?'
+        for direction in rooms_graph[node]:
+            if rooms_graph[node][direction] == '?':   
+                # shortest path to the next available exit
+                return path
+
+        if node not in visited:
+            visited.add(node)
+
+            # adjacent edges for that room
+            for adjacent in rooms_graph[node]:
+                path_copy = path.copy()
+                path_copy.append(rooms_graph[node][adjacent])
+                q.enqueue(path_copy)
+
+def reverse_dir(direction):
+    if direction == 'n':
+        return 's'
+    if direction == 's':
+        return 'n'
+    if direction == 'w':
+        return 'e'
+    if direction == 'e':
+        return 'w'
+
+# loop will run until every room is visited
+while len(rooms_graph) < len(roomGraph):  
+    current_room_exits = rooms_graph[player.currentRoom.id]
+    unexplored_exits = []
+    print(' ')
+    print('CURRENT ROOM ID:', player.currentRoom.id)
+
+    # check every exit in the room
+    for direction in current_room_exits:
+        if current_room_exits[direction] == '?':
+            unexplored_exits.append(direction)
+            
+    # automate movement
+    if len(unexplored_exits) > 0: 
+        # first exit 
+        firstDirection = unexplored_exits[0]   # be wary of using random...
+        # log path direction
+        traversalPath.append(firstDirection)
+        # to mark discovered exits in traversal graph after movement
+        prev_room_id = player.currentRoom.id
+        # move player
+        player.travel(firstDirection)
+
+        exits_dict={}
+        print('CURRENT ROOM ID:', player.currentRoom.id)
+
+        if player.currentRoom.id not in rooms_graph:
+            for direction in player.currentRoom.getExits():
+                print('CURRENT ROOM EXITS', player.currentRoom.getExits())
+                exits_dict[direction] = '?'
+            # log new room explored into traversal graph
+            rooms_graph[player.currentRoom.id] = exits_dict
+        # set explored exit in previous room to new room id
+        rooms_graph[prev_room_id][firstDirection] = player.currentRoom.id
+        # set new room entry way to previous room id
+        rooms_graph[player.currentRoom.id][reverse_dir(firstDirection)] = prev_room_id
+        print('ROOMS GRAPH', rooms_graph)
+
+    # when we are in a room with no exits
+    else:
+        # use bfs to get the path to the room with next available exit
+        # traverse the player with directions from the path
+        path_to_next = bfs_exit(player.currentRoom.id)
+        print(path_to_next)
+        
+        # convert path to string directions 
+        # if current room exit == previous room id
+        # add to directions 
+        directions = []
+        current_room_id = path_to_next[0]
+        for direction in rooms_graph[current_room_id]:
+            for room in path_to_next[1:]:
+                # if current room exit == previous room id
+                if rooms_graph[current_room_id][direction] == room:
+                        directions.append(direction)
+
+        for direction in directions:
+            traversalPath.append(direction)
+            player.travel(direction)
+
+
+    # pick random direction from unexplored_exits
+    # log in traversalPath
+    # move player in that direction
+    # repeat until dead-end (dfs)
+    # if dead-end 
+    # go back to nearest room that has an unexplored path (bfs)
 
 # TRAVERSAL TEST
 visited_rooms = set()
